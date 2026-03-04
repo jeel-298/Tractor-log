@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#e8a020">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TractorLog">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Tractor Log</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Mono:wght@400;600&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e0b;
+    --surface: #1a1814;
+    --card: #222018;
+    --border: #3a3628;
+    --accent: #e8a020;
+    --accent2: #c45c10;
+    --green: #4caf72;
+    --red: #e84040;
+    --text: #f0ead8;
+    --muted: #7a7060;
+    --stripe: rgba(232,160,32,0.04);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-image:
+      repeating-linear-gradient(0deg,var(--stripe) 0,var(--stripe) 1px,transparent 1px,transparent 40px),
+      repeating-linear-gradient(90deg,var(--stripe) 0,var(--stripe) 1px,transparent 1px,transparent 40px);
+    overscroll-behavior: none;
+  }
+  header {
+    background: var(--surface);
+    border-bottom: 3px solid var(--accent);
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+  }
+  .logo { display:flex; align-items:center; gap:10px; }
+  .logo-icon { font-size:26px; line-height:1; }
+  .logo-text { font-family:'Black Han Sans',sans-serif; font-size:20px; letter-spacing:2px; color:var(--accent); line-height:1; }
+  .logo-sub { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-top:2px; }
+  .header-stats { display:flex; gap:18px; }
+  .hstat { text-align:right; }
+  .hstat-val { font-family:'Black Han Sans',sans-serif; font-size:22px; color:var(--accent); line-height:1; }
+  .hstat-label { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+  .main { max-width:900px; margin:0 auto; padding:16px 12px; padding-bottom:80px; }
+
+  /* Install banner */
+  #install-banner {
+    display:none; background:linear-gradient(135deg,#1a3a1a,#1a4a2a);
+    border:2px solid var(--green); border-radius:6px;
+    padding:14px 16px; margin-bottom:16px;
+    align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  #install-banner.show { display:flex; }
+  .install-text { flex:1; font-size:14px; font-weight:700; letter-spacing:1px; }
+  .install-text small { display:block; font-family:'IBM Plex Mono',monospace; font-size:9px; color:#7aaf7a; letter-spacing:2px; margin-top:2px; }
+  .btn-install { background:var(--green); color:#000; padding:8px 18px; border:none; border-radius:3px; font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:800; letter-spacing:2px; cursor:pointer; }
+
+  /* Tabs */
+  .tabs { display:flex; margin-bottom:16px; border:2px solid var(--border); border-radius:4px; overflow:hidden; }
+  .tab { flex:1; padding:11px 6px; background:var(--surface); border:none; color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all .2s; border-right:2px solid var(--border); }
+  .tab:last-child { border-right:none; }
+  .tab.active { background:var(--accent); color:#000; }
+  .tab:not(.active):hover { background:var(--card); color:var(--text); }
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  /* Form */
+  .add-form { background:var(--surface); border:2px solid var(--border); border-top:4px solid var(--accent); border-radius:4px; padding:18px; margin-bottom:16px; }
+  .form-title { font-family:'Black Han Sans',sans-serif; font-size:17px; letter-spacing:2px; color:var(--accent); margin-bottom:14px; }
+  .form-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .form-group { flex:1; min-width:140px; }
+  .form-group label { display:block; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:5px; }
+  .form-group input { width:100%; background:var(--bg); border:2px solid var(--border); border-radius:3px; padding:10px 11px; color:var(--text); font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:600; outline:none; transition:border-color .2s; }
+  .form-group input:focus { border-color:var(--accent); }
+  .form-group input::placeholder { color:var(--muted); }
+  .btn { padding:10px 20px; border:none; border-radius:3px; font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:800; letter-spacing:2px; text-transform:uppercase; cursor:pointer; transition:all .15s; }
+  .btn-primary { background:var(--accent); color:#000; }
+  .btn-primary:hover { background:#f0b030; }
+  .btn-danger { background:transparent; color:var(--red); border:1px solid var(--red); padding:5px 10px; font-size:12px; }
+  .btn-danger:hover { background:var(--red); color:#fff; }
+  .btn-reset { background:transparent; color:var(--muted); border:1px solid var(--border); padding:5px 10px; font-size:12px; }
+  .btn-reset:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-download { background:linear-gradient(135deg,#1a6e3c,#4caf72); color:#000; padding:10px 20px; font-size:14px; box-shadow:0 3px 14px rgba(76,175,114,.35); letter-spacing:1.5px; }
+  .btn-download:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(76,175,114,.5); }
+
+  /* Contractor list */
+  .contractor-list { display:flex; flex-direction:column; gap:8px; }
+  .contractor-item { background:var(--card); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:3px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; animation:slideIn .2s ease; }
+  @keyframes slideIn { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
+  .ci-name { font-size:17px; font-weight:800; letter-spacing:1px; flex:1; }
+  .ci-vehicle { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); background:var(--bg); border:1px solid var(--border); padding:2px 8px; border-radius:2px; }
+  .ci-actions { display:flex; gap:8px; align-items:center; }
+
+  /* Counter grid */
+  .counter-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; }
+  .counter-card { background:var(--card); border:2px solid var(--border); border-radius:6px; overflow:hidden; display:flex; flex-direction:column; transition:transform .15s,border-color .15s; position:relative; }
+  .counter-card:hover { border-color:var(--accent); }
+  .counter-card-header { background:var(--surface); padding:12px 14px 8px; border-bottom:1px solid var(--border); }
+  .cc-name { font-family:'Black Han Sans',sans-serif; font-size:17px; letter-spacing:1px; line-height:1.1; }
+  .cc-vehicle { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); margin-top:2px; }
+  .counter-body { flex:1; display:flex; flex-direction:column; align-items:center; padding:16px 12px 12px; gap:10px; }
+  .trip-count { font-family:'Black Han Sans',sans-serif; font-size:64px; line-height:1; color:var(--accent); text-shadow:0 0 28px rgba(232,160,32,.3); transition:transform .1s; user-select:none; }
+  .trip-count.bump { transform:scale(1.2); color:#fff; }
+  .trip-label { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-top:-8px; }
+  .big-btn { width:100%; padding:14px; background:linear-gradient(135deg,var(--accent2),var(--accent)); border:none; border-radius:4px; color:#000; font-family:'Black Han Sans',sans-serif; font-size:20px; letter-spacing:3px; cursor:pointer; transition:all .15s; text-transform:uppercase; position:relative; overflow:hidden; -webkit-tap-highlight-color:transparent; }
+  .big-btn:active { transform:scale(.95); }
+  .card-footer { display:flex; justify-content:space-between; padding:6px 12px 10px; gap:6px; }
+
+  /* Ripple */
+  @keyframes ripple { 0%{transform:scale(0);opacity:.6} 100%{transform:scale(4);opacity:0} }
+  .ripple-circle { position:absolute; border-radius:50%; background:rgba(232,160,32,.5); pointer-events:none; animation:ripple .5s ease-out forwards; width:60px; height:60px; margin-left:-30px; margin-top:-30px; }
+
+  /* Summary */
+  .summary-table { width:100%; border-collapse:collapse; font-size:15px; }
+  .summary-table th { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; text-align:left; padding:8px 14px; border-bottom:2px solid var(--border); background:var(--surface); }
+  .summary-table td { padding:10px 14px; border-bottom:1px solid var(--border); }
+  .summary-table tr:hover td { background:var(--card); }
+  .summary-table .rank { font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); width:36px; }
+  .summary-table .s-name { font-weight:800; font-size:17px; }
+  .summary-table .s-trips { font-family:'Black Han Sans',sans-serif; font-size:26px; color:var(--accent); text-align:right; }
+  .s-bar { width:120px; padding-right:16px; }
+  .bar-bg { height:7px; background:var(--border); border-radius:4px; overflow:hidden; }
+  .bar-fill { height:100%; background:linear-gradient(90deg,var(--accent2),var(--accent)); border-radius:4px; transition:width .4s; }
+
+  .total-banner { background:linear-gradient(135deg,var(--card),var(--surface)); border:2px solid var(--accent); border-radius:6px; padding:16px; margin-bottom:20px; display:flex; justify-content:space-around; text-align:center; }
+  .tb-val { font-family:'Black Han Sans',sans-serif; font-size:36px; color:var(--accent); line-height:1; }
+  .tb-label { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
+
+  .empty-state { text-align:center; padding:50px 20px; color:var(--muted); }
+  .empty-icon { font-size:44px; margin-bottom:10px; }
+  .empty-text { font-size:18px; font-weight:700; letter-spacing:1px; }
+  .empty-sub { font-family:'IBM Plex Mono',monospace; font-size:10px; margin-top:5px; }
+  .date-label { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:2px; text-align:right; margin-bottom:10px; text-transform:uppercase; }
+  .section-label { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+  .toast { position:fixed; bottom:20px; right:16px; background:var(--green); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:13px; letter-spacing:2px; padding:9px 18px; border-radius:4px; opacity:0; transform:translateY(10px); transition:all .25s; z-index:999; text-transform:uppercase; pointer-events:none; }
+  .toast.show { opacity:1; transform:translateY(0); }
+
+  @media (max-width:400px) {
+    .counter-grid { grid-template-columns:1fr 1fr; }
+    .trip-count { font-size:52px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">🚜</div>
+    <div>
+      <div class="logo-text">TRACTOR LOG</div>
+      <div class="logo-sub">Trip Counter</div>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat"><div class="hstat-val" id="h-contractors">0</div><div class="hstat-label">Contractors</div></div>
+    <div class="hstat"><div class="hstat-val" id="h-trips">0</div><div class="hstat-label">Trips</div></div>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Install banner -->
+  <div id="install-banner">
+    <span style="font-size:28px">📱</span>
+    <div class="install-text">
+      Install as App
+      <small>WORKS OFFLINE · DATA ALWAYS SAVED</small>
+    </div>
+    <button class="btn-install" onclick="installApp()">INSTALL</button>
+    <button onclick="document.getElementById('install-banner').classList.remove('show')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:4px;">✕</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('count')">🚜 Trips</button>
+    <button class="tab" onclick="switchTab('manage')">👷 Manage</button>
+    <button class="tab" onclick="switchTab('summary')">📊 Summary</button>
+  </div>
+
+  <!-- COUNT TAB -->
+  <div class="panel active" id="panel-count">
+    <div class="date-label" id="today-label"></div>
+    <div class="section-label">Tap to add a trip</div>
+    <div class="counter-grid" id="counter-grid"></div>
+    <div id="count-empty" class="empty-state" style="display:none">
+      <div class="empty-icon">👷</div>
+      <div class="empty-text">No Contractors Yet</div>
+      <div class="empty-sub">Go to Manage tab to add</div>
+    </div>
+  </div>
+
+  <!-- MANAGE TAB -->
+  <div class="panel" id="panel-manage">
+    <div class="add-form">
+      <div class="form-title">➕ Add Contractor</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="inp-name" placeholder="Contractor name" maxlength="30">
+        </div>
+        <div class="form-group" style="max-width:160px">
+          <label>Tractor / Vehicle No.</label>
+          <input type="text" id="inp-vehicle" placeholder="e.g. RJ-14-1234" maxlength="20">
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary" onclick="addContractor()">ADD</button>
+        </div>
+      </div>
+    </div>
+    <div class="section-label">All Contractors</div>
+    <div class="contractor-list" id="contractor-list"></div>
+    <div id="manage-empty" class="empty-state" style="display:none">
+      <div class="empty-icon">🚜</div><div class="empty-text">No Contractors</div>
+      <div class="empty-sub">Add your first contractor above</div>
+    </div>
+  </div>
+
+  <!-- SUMMARY TAB -->
+  <div class="panel" id="panel-summary">
+    <div class="total-banner">
+      <div><div class="tb-val" id="sum-total">0</div><div class="tb-label">Total Trips</div></div>
+      <div><div class="tb-val" id="sum-count">0</div><div class="tb-label">Contractors</div></div>
+      <div><div class="tb-val" id="sum-avg">0</div><div class="tb-label">Avg / Person</div></div>
+    </div>
+    <div class="section-label">Leaderboard</div>
+    <table class="summary-table">
+      <thead><tr><th>#</th><th>Contractor</th><th class="s-bar">Progress</th><th style="text-align:right">Trips</th></tr></thead>
+      <tbody id="summary-body"></tbody>
+    </table>
+    <div id="summary-empty" class="empty-state" style="display:none">
+      <div class="empty-icon">📊</div><div class="empty-text">No Data Yet</div>
+      <div class="empty-sub">Start counting trips to see summary</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;flex-wrap:wrap;gap:10px">
+      <button class="btn btn-download" onclick="downloadImage()">📸 DOWNLOAD IMAGE</button>
+      <button class="btn btn-danger" onclick="confirmResetAll()">RESET ALL TRIPS</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="snapshot-card" style="position:fixed;left:-9999px;top:0;width:580px;padding:28px;background:#0f0e0b;font-family:'Barlow Condensed',sans-serif;color:#f0ead8;"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// ============ INDEXEDDB STORAGE ============
+const DB_NAME = 'TractorLogDB', DB_VER = 1, STORE = 'contractors';
+let db = null;
+
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(STORE, {keyPath:'id'});
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbGetAll() {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbPut(obj) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).put(obj);
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbDelete(id) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).delete(id);
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  });
+}
+
+// ============ STATE ============
+let contractors = [];
+
+async function save(c) { await dbPut(c); }
+async function saveAll() { for (const c of contractors) await dbPut(c); }
+
+// ============ PWA INSTALL ============
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('show');
+});
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => {
+    deferredPrompt = null;
+    document.getElementById('install-banner').classList.remove('show');
+  });
+}
+
+// ============ SERVICE WORKER ============
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ============ TABS ============
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) =>
+    t.classList.toggle('active', ['count','manage','summary'][i] === name));
+  document.querySelectorAll('.panel').forEach((p,i) =>
+    p.classList.toggle('active', ['panel-count','panel-manage','panel-summary'][i] === 'panel-'+name));
+  if (name==='count') renderCountGrid();
+  if (name==='manage') renderManageList();
+  if (name==='summary') renderSummary();
+}
+
+// ============ ADD CONTRACTOR ============
+async function addContractor() {
+  const name = document.getElementById('inp-name').value.trim();
+  const vehicle = document.getElementById('inp-vehicle').value.trim();
+  if (!name) { showToast('Enter a name!', '#e84040'); return; }
+  if (contractors.find(c => c.name.toLowerCase()===name.toLowerCase())) {
+    showToast('Already exists!', '#e84040'); return;
+  }
+  const c = { id: Date.now(), name, vehicle: vehicle||'—', trips:0 };
+  contractors.push(c);
+  await save(c);
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-vehicle').value = '';
+  renderManageList();
+  updateHeader();
+  showToast('Contractor added!');
+}
+
+// ============ DELETE ============
+async function deleteContractor(id) {
+  if (!confirm('Delete this contractor?')) return;
+  contractors = contractors.filter(c => c.id!==id);
+  await dbDelete(id);
+  renderManageList();
+  updateHeader();
+  showToast('Deleted.', '#e84040');
+}
+
+// ============ RESET TRIPS ============
+async function resetTrips(id) {
+  const c = contractors.find(c=>c.id===id);
+  if (!c||!confirm(`Reset trips for ${c.name}?`)) return;
+  c.trips = 0;
+  await save(c);
+  renderCountGrid();
+  renderManageList();
+  updateHeader();
+  showToast('Trips reset.');
+}
+
+async function confirmResetAll() {
+  if (!confirm('Reset ALL trips for ALL contractors?')) return;
+  contractors.forEach(c=>c.trips=0);
+  await saveAll();
+  renderCountGrid(); renderSummary(); updateHeader();
+  showToast('All trips reset!', '#e84040');
+}
+
+// ============ ADD TRIP ============
+async function addTrip(id, btn) {
+  const c = contractors.find(c=>c.id===id);
+  if (!c) return;
+  c.trips++;
+  await save(c);
+  updateHeader();
+  const el = document.getElementById('count-'+id);
+  if (el) {
+    el.textContent = c.trips;
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+    setTimeout(()=>el.classList.remove('bump'),200);
+  }
+  // Ripple
+  const card = btn.closest('.counter-card');
+  if (card) {
+    const rip = document.createElement('div');
+    rip.className='ripple-circle';
+    const br=btn.getBoundingClientRect(), cr=card.getBoundingClientRect();
+    rip.style.left=(br.left-cr.left+br.width/2)+'px';
+    rip.style.top=(br.top-cr.top+br.height/2)+'px';
+    card.appendChild(rip);
+    setTimeout(()=>rip.remove(),600);
+  }
+}
+
+// ============ RENDER COUNT ============
+function renderCountGrid() {
+  const grid=document.getElementById('counter-grid');
+  const empty=document.getElementById('count-empty');
+  if (!contractors.length) { grid.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  grid.innerHTML = contractors.map(c=>`
+    <div class="counter-card" id="card-${c.id}">
+      <div class="counter-card-header">
+        <div class="cc-name">${esc(c.name)}</div>
+        <div class="cc-vehicle">${esc(c.vehicle)}</div>
+      </div>
+      <div class="counter-body">
+        <div class="trip-count" id="count-${c.id}">${c.trips}</div>
+        <div class="trip-label">TRIPS</div>
+        <button class="big-btn" onclick="addTrip(${c.id},this)">+ TRIP</button>
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-reset" onclick="resetTrips(${c.id})">RESET</button>
+      </div>
+    </div>`).join('');
+}
+
+// ============ RENDER MANAGE ============
+function renderManageList() {
+  const list=document.getElementById('contractor-list');
+  const empty=document.getElementById('manage-empty');
+  if (!contractors.length) { list.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  list.innerHTML = contractors.map(c=>`
+    <div class="contractor-item">
+      <span class="ci-name">${esc(c.name)}</span>
+      <span class="ci-vehicle">${esc(c.vehicle)}</span>
+      <div class="ci-actions">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--accent);font-weight:700">${c.trips} trips</span>
+        <button class="btn btn-danger" onclick="deleteContractor(${c.id})">DEL</button>
+      </div>
+    </div>`).join('');
+}
+
+// ============ RENDER SUMMARY ============
+function renderSummary() {
+  const tbody=document.getElementById('summary-body');
+  const empty=document.getElementById('summary-empty');
+  const total=contractors.reduce((s,c)=>s+c.trips,0);
+  document.getElementById('sum-total').textContent=total;
+  document.getElementById('sum-count').textContent=contractors.length;
+  document.getElementById('sum-avg').textContent=contractors.length?Math.round(total/contractors.length):0;
+  if (!contractors.length) { tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  const sorted=[...contractors].sort((a,b)=>b.trips-a.trips);
+  const mx=Math.max(...sorted.map(c=>c.trips),1);
+  tbody.innerHTML=sorted.map((c,i)=>`
+    <tr>
+      <td class="rank">#${i+1}</td>
+      <td><div class="s-name">${esc(c.name)}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">${esc(c.vehicle)}</div></td>
+      <td class="s-bar"><div class="bar-bg"><div class="bar-fill" style="width:${Math.round(c.trips/mx*100)}%"></div></div></td>
+      <td class="s-trips">${c.trips}</td>
+    </tr>`).join('');
+}
+
+// ============ HEADER ============
+function updateHeader() {
+  document.getElementById('h-contractors').textContent=contractors.length;
+  document.getElementById('h-trips').textContent=contractors.reduce((s,c)=>s+c.trips,0);
+}
+
+// ============ DOWNLOAD IMAGE ============
+function downloadImage() {
+  if (!contractors.length) { showToast('No data!','#e84040'); return; }
+  showToast('Generating...','#e8a020');
+  const sorted=[...contractors].sort((a,b)=>b.trips-a.trips);
+  const total=contractors.reduce((s,c)=>s+c.trips,0);
+  const mx=Math.max(...sorted.map(c=>c.trips),1);
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const rows=sorted.map((c,i)=>{
+    const pct=Math.round(c.trips/mx*100);
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+    return `<div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #3a3628;">
+      <div style="font-size:22px;width:36px;text-align:center">${medal}</div>
+      <div style="flex:1">
+        <div style="font-size:20px;font-weight:800;letter-spacing:1px">${esc(c.name)}</div>
+        <div style="font-size:10px;color:#7a7060;font-family:monospace;letter-spacing:1px;margin-top:2px">${esc(c.vehicle)}</div>
+        <div style="margin-top:8px;height:10px;background:#3a3628;border-radius:5px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#c45c10,#e8a020);border-radius:5px"></div>
+        </div>
+      </div>
+      <div style="font-size:40px;font-weight:900;color:#e8a020;min-width:60px;text-align:right">${c.trips}</div>
+    </div>`;
+  }).join('');
+  const snap=document.getElementById('snapshot-card');
+  snap.innerHTML=`
+    <div style="border-bottom:4px solid #e8a020;padding-bottom:18px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:40px">🚜</div>
+      <div><div style="font-size:26px;font-weight:900;color:#e8a020;letter-spacing:3px">TRACTOR LOG</div>
+        <div style="font-size:10px;color:#7a7060;letter-spacing:3px;font-family:monospace">TRIP COUNTER REPORT</div></div>
+    </div>
+    <div style="font-size:10px;color:#7a7060;font-family:monospace;letter-spacing:2px;text-align:right;margin-bottom:18px">${dateStr.toUpperCase()}</div>
+    <div style="display:flex;justify-content:space-around;background:#1a1814;border:2px solid #e8a020;border-radius:8px;padding:16px;margin-bottom:22px">
+      <div style="text-align:center"><div style="font-size:36px;font-weight:900;color:#e8a020">${total}</div><div style="font-size:9px;color:#7a7060;font-family:monospace;letter-spacing:2px">TOTAL TRIPS</div></div>
+      <div style="text-align:center"><div style="font-size:36px;font-weight:900;color:#e8a020">${contractors.length}</div><div style="font-size:9px;color:#7a7060;font-family:monospace;letter-spacing:2px">CONTRACTORS</div></div>
+      <div style="text-align:center"><div style="font-size:36px;font-weight:900;color:#e8a020">${contractors.length?Math.round(total/contractors.length):0}</div><div style="font-size:9px;color:#7a7060;font-family:monospace;letter-spacing:2px">AVG / PERSON</div></div>
+    </div>
+    <div style="font-size:9px;color:#7a7060;letter-spacing:3px;font-family:monospace;margin-bottom:8px">LEADERBOARD</div>
+    ${rows}
+    <div style="margin-top:18px;text-align:center;font-size:9px;color:#3a3628;font-family:monospace;letter-spacing:2px">TRACTOR LOG SYSTEM</div>`;
+  html2canvas(snap,{backgroundColor:'#0f0e0b',scale:2,useCORS:true,logging:false}).then(canvas=>{
+    const link=document.createElement('a');
+    link.download=`tractor-log-${now.toISOString().slice(0,10)}.png`;
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    showToast('Image saved! ✓');
+  }).catch(()=>showToast('Failed!','#e84040'));
+}
+
+// ============ TOAST ============
+let toastTimer;
+function showToast(msg,color){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.background=color||'var(--green)';
+  t.classList.add('show'); clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ============ ENTER KEY ============
+document.getElementById('inp-vehicle').addEventListener('keydown',e=>{if(e.key==='Enter')addContractor();});
+document.getElementById('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('inp-vehicle').focus();});
+
+// ============ DATE ============
+const now=new Date();
+document.getElementById('today-label').textContent=now.toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// ============ INIT ============
+openDB().then(async ()=>{
+  contractors = await dbGetAll();
+  renderCountGrid();
+  updateHeader();
+}).catch(()=>{
+  // Fallback to localStorage if IndexedDB fails
+  try{ const d=localStorage.getItem('tractor_contractors'); if(d) contractors=JSON.parse(d); }catch(e){}
+  renderCountGrid(); updateHeader();
+});
+</script>
+</body>
+</html>
